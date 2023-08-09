@@ -1,6 +1,6 @@
 //import//
 import { useState, useEffect } from "react";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import requests from "../Requests";
 import { MainMovieResponse } from "../Types";
 
@@ -8,9 +8,17 @@ export const Main: React.FC = () => {
   const [movies, setMovies] = useState<MainMovieResponse[]>([]);
 
   useEffect(() => {
-    axios.get(requests.requestPopular).then((response) => {
-      setMovies(response.data.results);
-    });
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(requests.requestPopular)
+        setMovies(response.data.results)
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+        console.error(error.message as string)
+        } else console.error
+      }
+    }
+    fetchData()
   }, []);
 
   const movie: MainMovieResponse =
