@@ -1,8 +1,9 @@
 //import//
 import { useState, ChangeEvent, MouseEvent } from "react";
 import { Link } from "react-router-dom";
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { setDoc, doc } from "firebase/firestore";
 import { FirebaseError } from "firebase/app";
 
 export const SignUp = () => {
@@ -18,10 +19,16 @@ export const SignUp = () => {
     setPassword(e.target.value);
   };
 
-  const createAccount = async (e: MouseEvent<HTMLButtonElement>): Promise<void> => {
-    e.preventDefault()
+  const createAccount = async (
+    e: MouseEvent<HTMLButtonElement>
+  ): Promise<void> => {
+    e.preventDefault();
+    setMessage("");
     try {
       await createUserWithEmailAndPassword(auth, email, password);
+      setDoc(doc(db, "users", email), {
+        savedShows: [],
+      });
     } catch (error: unknown) {
       if (error instanceof FirebaseError) {
         if (error.code === "auth/email-already-in-use") {
@@ -30,6 +37,8 @@ export const SignUp = () => {
           setMessage("Must enter a valid email!");
         } else if (error.code === "auth/weak-password") {
           setMessage("Password must contain at least 6 characters");
+        } else if (error.code === "auth/missing-password") {
+          setMessage("Must enter a password!");
         } else {
           console.error(error.code as string);
           setMessage("Error creating user!");
@@ -51,6 +60,9 @@ export const SignUp = () => {
           <div className="max-w-[450px] h-[600px] mx-auto bg-black/75 text-white">
             <div className="max-w-[320px] mx-auto py-16">
               <h1 className="text-3xl font-bold">Sign Up</h1>
+              {message ? (
+                <p className="p-3 bg-red-400 my-2">{message}</p>
+              ) : null}
               <form className="w-full flex flex-col py-4">
                 <input
                   type="email"
@@ -86,7 +98,6 @@ export const SignUp = () => {
                   <Link to="/login">Sign In</Link>
                 </p>
               </form>
-              {message}
             </div>
           </div>
         </div>

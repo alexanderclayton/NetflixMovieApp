@@ -1,6 +1,6 @@
 //import//
 import { useState, ChangeEvent, MouseEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
@@ -9,6 +9,7 @@ export const Login: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [message, setMessage] = useState<string>("");
+  const navigate = useNavigate();
 
   const handleEmailChange = (e: ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
@@ -18,10 +19,12 @@ export const Login: React.FC = () => {
     setPassword(e.target.value);
   };
 
-  const login = async (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault()
+  const login = async (e: MouseEvent<HTMLButtonElement>): Promise<void> => {
+    e.preventDefault();
+    setMessage("");
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      navigate("/");
     } catch (error: unknown) {
       if (error instanceof FirebaseError) {
         if (error.code === "auth/wrong-password") {
@@ -30,6 +33,8 @@ export const Login: React.FC = () => {
           setMessage("No user with that email found!");
         } else if (error.code === "auth/invalid-email") {
           setMessage("Must enter a valid email!");
+        } else if (error.code === "auth/missing-password") {
+          setMessage("Must enter a password!");
         } else {
           console.error(error.code as string);
           setMessage("Error signing in user!");
@@ -39,7 +44,7 @@ export const Login: React.FC = () => {
   };
   return (
     <>
-    <div className="w-full h-screen">
+      <div className="w-full h-screen">
         <img
           className="hidden sm:block absolute w-full h-full object-cover"
           src="https://assets.nflxext.com/ffe/siteui/vlv3/f841d4c7-10e1-40af-bcae-07a3f8dc141a/f6d7434e-d6de-4185-a6d4-c77a2d08737b/US-en-20220502-popsignuptwoweeks-perspective_alpha_website_medium.jpg"
@@ -50,6 +55,9 @@ export const Login: React.FC = () => {
           <div className="max-w-[450px] h-[600px] mx-auto bg-black/75 text-white">
             <div className="max-w-[320px] mx-auto py-16">
               <h1 className="text-3xl font-bold">Sign In</h1>
+              {message ? (
+                <p className="p-3 bg-red-400 my-2">{message}</p>
+              ) : null}
               <form className="w-full flex flex-col py-4">
                 <input
                   type="email"
@@ -65,7 +73,10 @@ export const Login: React.FC = () => {
                   className="p-3 my-2 bg-gray-700 rounded"
                   onChange={handlePasswordChange}
                 />
-                <button onClick={login} className="bg-red-600 py-3 my-6 rounded font-bold">
+                <button
+                  onClick={login}
+                  className="bg-red-600 py-3 my-6 rounded font-bold"
+                >
                   Sign In
                 </button>
                 <div className="flex items-center justify-between text-sm text-gray-600">
@@ -76,13 +87,10 @@ export const Login: React.FC = () => {
                   <p>Need Help?</p>
                 </div>
                 <p className="py-8">
-                  <span className="text-gray-600">
-                    New to Netflix?
-                  </span>{" "}
+                  <span className="text-gray-600">New to Netflix?</span>{" "}
                   <Link to="/signup">Sign Up</Link>
                 </p>
               </form>
-              {message}
             </div>
           </div>
         </div>
